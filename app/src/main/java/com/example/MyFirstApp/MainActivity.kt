@@ -1,133 +1,135 @@
-package kg.iuca.MyFirstApp
+package com.example.myapplication
 
-
-
-import android.annotation.SuppressLint
 import android.os.Bundle
-import android.webkit.WebSettings.TextSize
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
-import com.example.MyFirstApp.ui.theme.MyFirstAppTheme
+import androidx.compose.ui.unit.sp
+import com.example.MyFirstApp.ui.theme.MyApplicationTheme
+import net.objecthunter.exp4j.ExpressionBuilder
 
-@SuppressLint("RestrictedApi")
-class MainActivity : ComponentActivity() { // Исправлено: используется androidx.activity.ComponentActivity
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MyFirstAppTheme {
+            MyApplicationTheme {
                 // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    Task4And3()
+                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                    DisplayCalculator()
                 }
-            }
-        }
-    }
-
-
-@Composable
-fun Task4And3() {
-// This is task 4
-    var isDarkTheme by remember { mutableStateOf(false) }
-
-    MaterialTheme(
-        colorScheme = if (isDarkTheme) darkColorScheme() else lightColorScheme()
-    ) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            Column(modifier = Modifier.padding(16.dp)) {
-
-                Text(
-                    text = "Приложения Список Задач",
-                    fontSize = 5.em
-                )
-                Spacer(modifier = Modifier.height(30.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(
-                        text = if (isDarkTheme) "Темная тема" else "Светлая тема",
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                    Switch(
-                        checked = isDarkTheme,
-                        onCheckedChange = { isDarkTheme = it }
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-
-
-                Task3()
             }
         }
     }
 }
+
 @Composable
-fun Task3() {
-// This is task 3
-    var taskText by remember { mutableStateOf("") }
-    var tasks by remember { mutableStateOf(listOf<String>()) }
-    Column (modifier = Modifier.padding(16.dp)){
+fun DisplayCalculator() {
+    var input by remember { mutableStateOf("") }
+    var result by remember { mutableStateOf("") }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         TextField(
-            value = taskText,
-            onValueChange = {taskText = it},
-            label = { Text(text = "Введите задачу")},
+            value = result,
+            onValueChange = { result = it },
+            readOnly = true,
             modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                unfocusedTextColor = MaterialTheme.colorScheme.onBackground
-            )
+            textStyle = LocalTextStyle.current.copy(fontSize = 24.sp),
+            placeholder = { Text("0") }
         )
-        Spacer(modifier = Modifier.height(8.dp))
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        val buttons = listOf(
+            listOf("7", "8", "9", "/"),
+            listOf("4", "5", "6", "*"),
+            listOf("1", "2", "3", "-"),
+            listOf(".", "0", "=", "+")
+        )
+
         Button(
             onClick = {
-                if (taskText.isNotEmpty()){
-                    tasks = tasks + taskText
-                    taskText = " "
-                }
-            }, modifier = Modifier.fillMaxWidth()
+                input = ""
+                result = ""
+            },
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Добавить задачу")
+            Text(text = "Clear")
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        LazyColumn {
-            items(tasks){ task ->
-                Text(text = task, modifier = Modifier.padding(4.dp))
+
+        buttons.forEach { row ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                row.forEach { label ->
+                    Buttons(label, Modifier.weight(1f)) {
+                        if (label == "=") {
+                            result = evaluateExpression(input)
+                        } else {
+                            input += label
+                            result = input
+                        }
+                    }
+                }
             }
         }
 
+    }
+}
 
+@Composable
+fun Buttons(label: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .padding(4.dp)
+    ) {
+        Text(text = label, fontSize = 24.sp)
+    }
+}
+
+fun evaluateExpression(input: String): String {
+    return try {
+        val expression = input.replace("×", "*").replace("÷", "/")
+        val result = ExpressionEvaluator.evaluate(expression)
+        result.toString()
+    } catch (e: Exception) {
+        "Ошибка"
+    }
+}
+
+object ExpressionEvaluator {
+    fun evaluate(expression: String): Double {
+        return try {
+            val exp = ExpressionBuilder(expression).build()
+            exp.evaluate()
+        } catch (e: Exception) {
+            0.0
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun GreetingPreview() {
+    MyApplicationTheme {
+        DisplayCalculator()
     }
 }
